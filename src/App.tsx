@@ -1,3 +1,4 @@
+// src/App.tsx - VERSÃO CORRIGIDA
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,28 +22,11 @@ import Configuracoes from "./pages/Configuracoes";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
-// Importes condicionais para evitar erros de build
-const SafeImport = (path: string, fallbackName: string) => {
-  try {
-    return require(`./pages/${path}`).default;
-  } catch (error) {
-    console.warn(`${fallbackName} não encontrado, usando fallback`);
-    return () => (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">{fallbackName}</h1>
-          <p className="text-muted-foreground">Em desenvolvimento</p>
-        </div>
-      </div>
-    );
-  }
-};
-
-// Carregue os componentes com fallback
-const SelectStore = SafeImport('SelectStore', 'Selecionar Adega');
-const CreateStore = SafeImport('CreateStore', 'Criar Adega');
-const CreateFirstStore = SafeImport('CreateFirstStore', 'Criar Primeira Adega');
-const StoreSettings = SafeImport('StoreSettings', 'Configurações da Adega');
+// IMPORTES DIRETOS - NÃO USE require()
+import SelectStore from "./pages/SelectStore";
+import CreateStore from "./pages/CreateStore";
+import CreateFirstStore from "./pages/CreateFirstStore";
+import StoreSettings from "./pages/StoreSettings";
 
 const queryClient = new QueryClient();
 
