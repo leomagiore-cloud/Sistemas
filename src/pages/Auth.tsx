@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { checkUserStores } from '@/services/storeService';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -37,9 +38,41 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      // Verifica se tem adegas ao invés de redirecionar direto
+      redirectBasedOnStores();
     }
   }, [user, navigate]);
+
+  const redirectBasedOnStores = async () => {
+  if (!user) return;
+
+  try {
+    const { data: stores, error } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    
+    if (!stores || stores.length === 0) {
+      // Primeira vez: cria adega inicial
+      navigate('/stores/create-first');
+    } else if (stores.length === 1) {
+      // Apenas 1 adega: acessa direto
+      localStorage.setItem('active_store_id', stores[0].id);
+      localStorage.setItem('active_store_name', stores[0].name);
+      navigate('/dashboard');
+    } else {
+      // Múltiplas adegas: seleção
+      navigate('/select-store');
+    }
+  } catch (error) {
+    console.error('Erro ao verificar adegas:', error);
+    // Fallback: vai para seleção
+    navigate('/select-store');
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +92,7 @@ export default function Auth() {
           return;
         }
 
-        const { error } = await signIn(email, password);
+        const { error, data } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
             toast.error('Email ou senha incorretos');
@@ -68,6 +101,11 @@ export default function Auth() {
           }
         } else {
           toast.success('Login realizado com sucesso!');
+          
+          // Após login, verifica adegas e redireciona
+          if (data?.user) {
+            await redirectBasedOnStores();
+          }
         }
       } else {
         const result = signUpSchema.safeParse({ email, password, confirmPassword, fullName });
@@ -81,7 +119,7 @@ export default function Auth() {
           return;
         }
 
-        const { error } = await signUp(email, password, fullName);
+        const { error, data } = await signUp(email, password, fullName);
         if (error) {
           if (error.message.includes('already registered')) {
             toast.error('Este email já está cadastrado');
@@ -90,8 +128,16 @@ export default function Auth() {
           }
         } else {
           toast.success('Conta criada com sucesso!');
+          
+          // Após cadastro, vai criar primeira adega
+          if (data?.user) {
+            navigate('/stores/create-first');
+          }
         }
       }
+    } catch (error) {
+      console.error('Erro no auth:', error);
+      toast.error('Ocorreu um erro. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -150,6 +196,7 @@ export default function Auth() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
+                    autoComplete="username"
                   />
                 </div>
                 {errors.email && (
@@ -168,6 +215,7 @@ export default function Auth() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
@@ -194,6 +242,7 @@ export default function Auth() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="pl-10"
+                      autoComplete="new-password"
                     />
                   </div>
                   {errors.confirmPassword && (

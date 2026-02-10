@@ -430,11 +430,11 @@ export function useSalesStats() {
         avgTicket,
         
         // Totais gerais (SEM cancelamentos)
-        totalRevenue, // ← CORRETO: apenas vendas concluídas
-        totalOrders: weekCount,
-        avgTicket: avgTicket,
-        cancelledOrders: cancelledCount,
-        cancelledRevenue: cancelledRevenue,
+  totalRevenue,
+  totalOrders: weekCount,
+  avgTicket,
+  cancelledOrders: cancelledCount,
+  cancelledRevenue,
       };
     },
     enabled: !!currentStore,

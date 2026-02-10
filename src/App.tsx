@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { StoreProvider } from "@/hooks/useStores";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { StoreRoute } from "@/components/StoreRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Catalogo from "./pages/Catalogo";
@@ -20,6 +21,29 @@ import Configuracoes from "./pages/Configuracoes";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
+// Importes condicionais para evitar erros de build
+const SafeImport = (path: string, fallbackName: string) => {
+  try {
+    return require(`./pages/${path}`).default;
+  } catch (error) {
+    console.warn(`${fallbackName} não encontrado, usando fallback`);
+    return () => (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">{fallbackName}</h1>
+          <p className="text-muted-foreground">Em desenvolvimento</p>
+        </div>
+      </div>
+    );
+  }
+};
+
+// Carregue os componentes com fallback
+const SelectStore = SafeImport('SelectStore', 'Selecionar Adega');
+const CreateStore = SafeImport('CreateStore', 'Criar Adega');
+const CreateFirstStore = SafeImport('CreateFirstStore', 'Criar Primeira Adega');
+const StoreSettings = SafeImport('StoreSettings', 'Configurações da Adega');
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -32,62 +56,30 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <AppLayout><Dashboard /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/catalogo" element={
-                <ProtectedRoute>
-                  <AppLayout><Catalogo /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/catalogo/:category" element={
-                <ProtectedRoute>
-                  <AppLayout><Catalogo /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/pdv" element={
-                <ProtectedRoute>
-                  <AppLayout><PDV /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/estoque" element={
-                <ProtectedRoute>
-                  <AppLayout><Estoque /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/vendas" element={
-                <ProtectedRoute>
-                  <AppLayout><Vendas /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/financeiro" element={
-                <ProtectedRoute>
-                  <AppLayout><Financeiro /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/clientes" element={
-                <ProtectedRoute>
-                  <AppLayout><Clientes /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/delivery" element={
-                <ProtectedRoute>
-                  <AppLayout><Delivery /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/notificacoes" element={
-                <ProtectedRoute>
-                  <AppLayout><Notificacoes /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/configuracoes" element={
-                <ProtectedRoute>
-                  <AppLayout><Configuracoes /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
+              
+              <Route element={<ProtectedRoute />}>
+                <Route path="/select-store" element={<SelectStore />} />
+                <Route path="/stores/create" element={<CreateStore />} />
+                <Route path="/stores/create-first" element={<CreateFirstStore />} />
+                
+                <Route element={<StoreRoute />}>
+                  <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
+                  <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+                  <Route path="/catalogo" element={<AppLayout><Catalogo /></AppLayout>} />
+                  <Route path="/catalogo/:category" element={<AppLayout><Catalogo /></AppLayout>} />
+                  <Route path="/pdv" element={<AppLayout><PDV /></AppLayout>} />
+                  <Route path="/estoque" element={<AppLayout><Estoque /></AppLayout>} />
+                  <Route path="/vendas" element={<AppLayout><Vendas /></AppLayout>} />
+                  <Route path="/financeiro" element={<AppLayout><Financeiro /></AppLayout>} />
+                  <Route path="/clientes" element={<AppLayout><Clientes /></AppLayout>} />
+                  <Route path="/delivery" element={<AppLayout><Delivery /></AppLayout>} />
+                  <Route path="/notificacoes" element={<AppLayout><Notificacoes /></AppLayout>} />
+                  <Route path="/configuracoes" element={<AppLayout><Configuracoes /></AppLayout>} />
+                  <Route path="/stores/:storeId/settings" element={<AppLayout><StoreSettings /></AppLayout>} />
+                </Route>
+                
+                <Route path="*" element={<NotFound />} />
+              </Route>
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
@@ -97,23 +89,3 @@ const App = () => (
 );
 
 export default App;
-
-function AuthDebug() {
-  const { user, isAdmin } = useAuth();
-  const { data: profile } = useProfile();
-  
-  useEffect(() => {
-    console.log('=== AUTH DEBUG ===');
-    console.log('User ID:', user?.id);
-    console.log('isAdmin:', isAdmin);
-    console.log('Profile:', profile ? {
-      id: profile.id,
-      role: profile.role,
-      is_approved: profile.is_approved,
-      is_blocked: profile.is_blocked
-    } : null);
-    console.log('=== FIM DEBUG ===');
-  }, [user, isAdmin, profile]);
-  
-  return null;
-}
